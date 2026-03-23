@@ -570,21 +570,20 @@ export class ClaudeAcpAgent implements Agent {
             const contextWindowSize =
               contextWindows.length > 0 ? Math.min(...contextWindows) : 200000;
 
-            // Send usage_update notification
-            if (lastAssistantTotalUsage !== null) {
-              await this.client.sessionUpdate({
-                sessionId: params.sessionId,
-                update: {
-                  sessionUpdate: "usage_update",
-                  used: lastAssistantTotalUsage,
-                  size: contextWindowSize,
-                  cost: {
-                    amount: message.total_cost_usd,
-                    currency: "USD",
-                  },
+            // Send usage_update notification — always send with a valid
+            // number so clients don't receive `used: null` (see #375).
+            await this.client.sessionUpdate({
+              sessionId: params.sessionId,
+              update: {
+                sessionUpdate: "usage_update",
+                used: lastAssistantTotalUsage ?? 0,
+                size: contextWindowSize,
+                cost: {
+                  amount: message.total_cost_usd,
+                  currency: "USD",
                 },
-              });
-            }
+              },
+            });
 
             if (!promptReplayed) {
               // This result is from a background task that finished after
